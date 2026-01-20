@@ -63,6 +63,10 @@ int main() {
     // HIBA: Itt kellene felszabaditani a memoriait!
     // De nem tesszuk...
     // A memoria "elveszett" - a program vegere sem szabadul fel
+    free (greeting);
+    free (john->name);
+    free (john);
+
     
     printf("\nProgram vege. (De a memoria meg mindig foglalt!)\n");
     printf("Futtasd Valgrind-dal: make valgrind_04\n");

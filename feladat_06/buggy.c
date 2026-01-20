@@ -21,7 +21,7 @@ void array_overflow_bug() {
     int array[10];
     
     // HIBA: A tomb 0-9 indexeket tartalmazza, nem 0-15!
-    for (int i = 0; i <= 15; i++) {
+    for (int i = 0; i <= 9; i++) {
         array[i] = i * 10;
         printf("array[%d] = %d\n", i, array[i]);
     }
