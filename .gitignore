@@ -1,0 +1,36 @@
+# Compiled binaries
+*.out
+*.exe
+feladat_01
+feladat_02
+feladat_03
+feladat_04
+feladat_05
+feladat_06
+
+# Object files
+*.o
+*.so
+*.a
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Core dumps
+core
+core.*
+vgcore.*
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db

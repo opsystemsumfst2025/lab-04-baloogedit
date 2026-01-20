@@ -1,0 +1,167 @@
+Valgrind Hasznalati Utmutato
+============================
+
+ALAPVETO HASZNALAT
+------------------
+
+Egyszerű futtatás:
+    valgrind ./program
+
+Memory leak ellenorzes:
+    valgrind --leak-check=full ./program
+
+Reszletes kimenet:
+    valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./program
+
+
+KIMENET ERTELMEZESE
+-------------------
+
+1. MEMORY LEAK
+--------------
+
+Pelda kimenet:
+    ==12345== 40 bytes in 1 blocks are definitely lost in loss record 1 of 1
+    ==12345==    at 0x4C2FB0F: malloc (in /usr/lib/valgrind/...)
+    ==12345==    by 0x108A: create_person (program.c:15)
+    ==12345==    by 0x10C2: main (program.c:28)
+
+Mit jelent:
+    - 40 byte memoria veszett el
+    - A malloc a program.c 15. soraban tortent
+    - Amit a main a 28. sorbol hivott
+
+Mit kell tenni:
+    - Menj a program.c 15. sorhoz
+    - Nezd meg, mit foglaltal
+    - Keresd meg, hol kellene free-zni
+    - Tedd be a free() hivast
+
+
+2. LEAK SUMMARY
+---------------
+
+All heap blocks were freed -- no leaks are possible
+    ✓ TÖKÉLETES! Minden memoria fel lett szabaditva.
+
+definitely lost: 40 bytes in 1 blocks
+    ✗ PROBLEMA! 40 byte biztos elveszett.
+    Ez az, amit meg kell javitani.
+
+indirectly lost: 20 bytes in 1 blocks
+    Egy struktura belső pointere veszett el.
+    Ha a "definitely lost"-ot megjavitod, ez is megoldodik.
+
+possibly lost: 16 bytes in 1 blocks
+    Valgrind nem biztos, de gyanús.
+
+still reachable: 100 bytes in 2 blocks
+    Technokailag nem leak, de nem is szabaditottad fel.
+    Jobb lenne felszabaditani.
+
+
+3. INVALID MEMORY ACCESS
+-------------------------
+
+Invalid write of size 4
+    ==12345==    at 0x108B: main (program.c:23)
+    ==12345==  Address 0x... is 0 bytes after a block of size 40 alloc'd
+
+Mit jelent:
+    - Tul nagy indexszel irtál a tombba
+    - A program.c 23. soraban
+    - 40 byte-os block utan probaltal irni
+
+Invalid read of size 4
+    Hasonlo, de olvasasnal tortent.
+
+Use of uninitialised value
+    Inicializalatlan valtozot hasznaltal.
+
+
+4. USE AFTER FREE
+-----------------
+
+Invalid read/write of size X
+    ==12345==  Address 0x... is 0 bytes inside a block of size 40 free'd
+    ==12345==    at 0x4C30D3B: free (in /usr/lib/valgrind/...)
+    ==12345==    by 0x108F: main (program.c:30)
+
+Mit jelent:
+    - Mar felszabaditott memoriat probalsz hasznalni
+    - A free a 30. sorban volt
+    - Utana meg hasznaltad
+
+
+HASZNOS FLAGEK
+--------------
+
+--leak-check=full
+    Reszletes leak informacio minden leak-rol
+
+--show-leak-kinds=all
+    Minden leak tipus megjeleniteese (definitely, possibly, stb.)
+
+--track-origins=yes
+    Megmutatja, honnan szarmaznak az inicializalatlan ertekek
+
+--verbose
+    Meg tobb informacio (debug celokra)
+
+-v
+    Rovid verbose
+
+
+THREAD HIBAK DETEKTALASA
+-------------------------
+
+Valgrind Helgrind eszkoz:
+    valgrind --tool=helgrind ./program
+
+Mit talalja meg:
+    - Race condition-ok
+    - Helytelen mutex hasznalat
+    - Lock order problemak (deadlock veszelyek)
+
+
+TIPIKUS MUNKAMENET
+------------------
+
+1. Fordits debug informacioval:
+    gcc -g -Wall -pthread program.c -o program
+
+2. Futtasd Valgrind-dal:
+    valgrind --leak-check=full ./program
+
+3. Nezd meg a LEAK SUMMARY-t:
+    - Ha "All heap blocks were freed" -> SIKER
+    - Ha "definitely lost" -> JAVITAS KELL
+
+4. Menj az elso leak helyszinere:
+    - Valgrind megmondja a sort
+    - Tedd be a hianyzó free()-t
+
+5. Ismeteld meg, amig minden leak meg nem szunt
+
+
+GYAKORI MEGOLDASOK
+------------------
+
+Problema: "definitely lost: 40 bytes"
+Megoldas: Keress egy free() hivast a malloclanak megfeleloen
+
+Problema: "Invalid write of size 4"
+Megoldas: Ellenorizd a tomb indexeket (array[i] ahol i >= size)
+
+Problema: "Use of uninitialised value"
+Megoldas: Inicializald a valtozokat deklaraciokor
+
+Problema: "Invalid read/write... block free'd"
+Megoldas: Ne hasznald a memoriat free() utan (vagy allitsd NULL-ra)
+
+
+MEGJEGYZES
+----------
+
+Valgrind lassitja a programot (10-50x), de megeri!
+Minden dinamikus memoria kezelest futtass Valgrind-dal.
